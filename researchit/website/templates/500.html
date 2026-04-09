@@ -1,0 +1,21 @@
+{% extends "website/base.html" %}
+
+{% block head_seo_tags %}
+{% endblock head_seo_tags %}
+
+{% block extra_head %}
+    {# Prevent indexing of private pages #}
+    <meta name="robots" content="noindex, nofollow" />
+{% endblock extra_head %}
+
+{% block title %}
+  Server Error
+{% endblock title %}
+
+{% block content %}
+  <h1>Ooops!</h1>
+  <h3>Looks like something went wrong!</h3>
+  <p>
+    These errors are tracked automatically, but if the problem persists feel free to contact us.
+  </p>
+{% endblock content %}

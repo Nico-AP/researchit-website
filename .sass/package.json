@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "sass:watch": "sass --watch ../researchit/core/assets/scss/main.scss:../researchit/core/static/core/css/researchit.css",
+    "sass:build": "sass ../researchit/core/assets/scss/main.scss:../researchit/core/static/core/css/researchit.css --style=compressed --no-source-map"
+  },
+  "devDependencies": {
+    "sass": "^1.89.0"
+  }
+}

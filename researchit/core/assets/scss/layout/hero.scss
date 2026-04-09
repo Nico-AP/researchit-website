@@ -1,0 +1,135 @@
+.hero {
+  padding: 6rem 0 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle grid texture */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+          linear-gradient(var(--brand-border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--brand-border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* radial fade to hide grid edges */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, transparent 40%, var(--brand-bg) 100%);
+  pointer-events: none;
+}
+
+.hero-inner { position: relative; z-index: 1; }
+
+/* logo mark */
+.logo-block {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.logo-dark {
+  background: #0d3d2b;
+  padding: 0.75rem 1.1rem 0.75rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logo-rit-vert {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 8px;
+  color: var(--brand-green);
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+}
+
+.logo-research-text {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--brand-green);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.logo-it-box {
+  background: var(--brand-green);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.logo-it-text {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #0b1612;
+  line-height: 1;
+}
+
+.hero-tagline {
+  font-size: 12px;
+  color: var(--brand-green-dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 1.25rem;
+}
+
+.hero-headline {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 600;
+  color: var(--brand-text);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.hero-sub {
+  font-size: 14px;
+  color: var(--brand-muted);
+  line-height: 1.8;
+  max-width: 520px;
+  margin-bottom: 2rem;
+}
+
+.btn-primary-brand {
+  background: var(--brand-green);
+  color: #0b1612;
+  border: none;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 22px;
+  transition: background 0.15s, transform 0.1s;
+  display: inline-block;
+}
+
+.btn-primary-brand:hover {
+  background: #20ffaa;
+  color: #0b1612;
+  transform: translateY(-1px);
+}
+
+.btn-outline-brand {
+  background: transparent;
+  color: var(--brand-green-dim);
+  border: 1px solid var(--brand-border);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 10px 22px;
+  transition: border-color 0.15s, color 0.15s;
+  display: inline-block;
+}
+
+.btn-outline-brand:hover {
+  border-color: var(--brand-green-muted);
+  color: var(--brand-green);
+}

@@ -1,0 +1,38 @@
+:root {
+  // Colors
+  --rit-color-black: #000000;
+  --rit-color-darkgrey: #212121;
+  --rit-color-grey: #999999;  // = 40% black
+  --rit-color-white: #ffffff;
+
+  --rit-color-accent-green: #89f8c3;
+  --rit-color-accent-pink: #ff9bba;
+  --rit-color-accent-yellow: #ffe2a5;
+  --rit-color-accent-red: #ff4e22;
+
+  // Fonts & Text
+  --rit-ff-jetbrains: "JetBrains Mono", sans-serif;
+
+  --rit-ff-text: var(--rit-ff-jetbrains);
+  --rit-ff-headers: var(--rit-ff-jetbrains);
+
+  --rit-font-color-main: var(--rit-color-white);
+  --rit-font-color-inverted: var(--rit-color-black);
+  --rit-font-color-modal: var(--rit-color-black);
+  --rit-font-color-muted: var(--rit-color-grey);
+
+  // Elements
+  --rit-body-bg-color: #181c22;
+
+  --brand-bg:        #181c22;
+  --brand-surface:   #13171c;
+  --brand-surface-2: #1e242c;
+  --brand-border:    #1c3527;
+  --brand-green:     #47ff9a;
+  --brand-green-dark: #003a34;
+  --brand-green-dim: #75d9a2;
+  --brand-green-muted: #3a7a5c;
+  --brand-text:      #e8f5ee;
+  --brand-muted:     #7aaa90;
+  --brand-faint:     #3a5c48;
+}
