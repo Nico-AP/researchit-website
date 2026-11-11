@@ -27,13 +27,24 @@ repos:
       - id: django-upgrade
         args: ['--target-version', '5.2']
 
-  - repo: https://github.com/pypa/pip-audit
-    rev: v2.10.0
+  # Keep uv.lock in sync with pyproject.toml.
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.13
     hooks:
-      -   id: pip-audit
-          stages: [pre-push]
-          files: ^requirements/.*\.txt$
-          args: ["-r", "requirements/base.txt", "-r", "requirements/production.txt"]
+      - id: uv-lock
+
+  # Audit the locked production dependencies for known vulnerabilities.
+  - repo: local
+    hooks:
+      - id: pip-audit
+        name: pip-audit (locked production deps)
+        stages: [pre-push]
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+        entry: >-
+          sh -c 'uv export --frozen --no-dev --no-emit-project --format requirements-txt
+          | uv run --frozen pip-audit --disable-pip --require-hashes -r /dev/stdin'
 
   # Run the Ruff linter.
   - repo: https://github.com/astral-sh/ruff-pre-commit

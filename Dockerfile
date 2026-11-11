@@ -4,16 +4,23 @@
 
 ARG PYTHON_VERSION=3.12
 
-# --- build: install dependencies into a venv, collect static files -------------
+# --- build: install locked dependencies with uv, collect static files ----------
 FROM python:${PYTHON_VERSION}-slim-trixie AS build
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
-RUN python -m venv /opt/venv
+COPY --from=ghcr.io/astral-sh/uv:0.12.13 /uv /bin/uv
+# Venv outside /app; use the image's Python, never download one; copy (not
+# hardlink) from the cache mount; precompile bytecode for faster startup.
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1
 ENV PATH="/opt/venv/bin:$PATH"
-COPY requirements/ /app/requirements/
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r /app/requirements/production.txt
-COPY . /app
 WORKDIR /app
+# Dependencies first (cached layer until pyproject.toml/uv.lock change).
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-dev
+COPY . /app
 # Production settings need these at import time; the values are build-only.
 RUN DJANGO_SETTINGS_MODULE=config.settings.production \
     DJANGO_SECRET_KEY=build-only \

@@ -1,4 +1,0 @@
--r base.txt
-gunicorn==25.0.3  # https://github.com/benoitc/gunicorn
-psycopg[binary]==3.3.2  # https://www.psycopg.org/psycopg3/docs/basic/install.html
-whitenoise[brotli]==6.12.0  # https://github.com/evansd/whitenoise
