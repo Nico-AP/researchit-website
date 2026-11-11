@@ -26,14 +26,14 @@ env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-APPS_DIR = BASE_DIR / "ddmaas"
+APPS_DIR = BASE_DIR / "researchit"
 
 
 # Application definition
 # ------------------------------------------------------------------------------
 
-SECRET_KEY = env.str("SECRET_KEY")
-DEBUG = env.bool("DEBUG", default=False)
+SECRET_KEY = env.str("DJANGO_SECRET_KEY")
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
 SITE_ID = 1
 
@@ -61,6 +61,8 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    # First: answers /healthz before host validation and the HTTPS redirect.
+    "config.health.HealthCheckMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -92,6 +94,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.media",
                 "django.template.context_processors.static",
+                "researchit.core.context_processors.analytics",
             ],
         },
     },
@@ -157,7 +160,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "CET"
+TIME_ZONE = "Europe/Zurich"  # IANA name (legacy "CET" is gone from Debian trixie)
 USE_I18N = True
 USE_TZ = True
 
@@ -168,9 +171,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = env.str("STATIC_ROOT", default=str(BASE_DIR / "staticfiles"))
-STATICFILES_DIRS = [
-    APPS_DIR / "static",
-]
+# Static files live in each app's static/ directory (found via APP_DIRS).
 
 MEDIA_ROOT = env.str("MEDIA_ROOT", default=str(BASE_DIR / "media"))
 MEDIA_URL = "/media/"
@@ -214,39 +215,56 @@ ADMINS = [tuple(admin) for admin in json.loads(env.str("ADMINS", "[]"))]
 MANAGERS = ADMINS
 
 
+# Analytics (Umami, cookieless) - only rendered when both values are set
+# ------------------------------------------------------------------------------
+# e.g. UMAMI_SCRIPT_URL=https://analytics.example.com/script.js
+
+UMAMI_SCRIPT_URL = env.str("UMAMI_SCRIPT_URL", default="")
+UMAMI_WEBSITE_ID = env.str("UMAMI_WEBSITE_ID", default="")
+
+
 # Logging
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#logging
 
-LOG_DIR = BASE_DIR / "logs"
-Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
+# Logs go to stdout (collected + rotated by Docker in production).
+# local.py additionally writes rotating log files to BASE_DIR / "logs".
+
+# Shared by structlog events (django-structlog) and plain stdlib log records, so
+# both get the same fields and anonymised IPs (GDPR).
+_LOG_PRE_CHAIN = [
+    structlog.contextvars.merge_contextvars,
+    structlog.stdlib.add_log_level,
+    structlog.stdlib.add_logger_name,
+    structlog.stdlib.ExtraAdder(),
+    structlog.processors.TimeStamper(fmt="iso"),
+    structlog.processors.StackInfoRenderer(),
+    structlog.processors.format_exc_info,
+    anonymize_ip_processor,
+    structlog.processors.CallsiteParameterAdder(
+        parameters=[
+            structlog.processors.CallsiteParameter.FILENAME,
+            structlog.processors.CallsiteParameter.FUNC_NAME,
+            structlog.processors.CallsiteParameter.LINENO,
+        ],
+    ),
+]
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s",  # noqa: E501
+            "()": structlog.stdlib.ProcessorFormatter,
+            "foreign_pre_chain": _LOG_PRE_CHAIN,
+            "processors": [
+                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+                structlog.dev.ConsoleRenderer(colors=False),
+            ],
         },
         "json": {
             "()": structlog.stdlib.ProcessorFormatter,
-            "foreign_pre_chain": [
-                structlog.contextvars.merge_contextvars,
-                structlog.stdlib.add_log_level,
-                structlog.stdlib.add_logger_name,
-                structlog.stdlib.ExtraAdder(),
-                structlog.processors.TimeStamper(fmt="iso"),
-                structlog.processors.StackInfoRenderer(),
-                structlog.processors.format_exc_info,
-                anonymize_ip_processor,
-                structlog.processors.CallsiteParameterAdder(
-                    parameters=[
-                        structlog.processors.CallsiteParameter.FILENAME,
-                        structlog.processors.CallsiteParameter.FUNC_NAME,
-                        structlog.processors.CallsiteParameter.LINENO,
-                    ],
-                ),
-            ],
+            "foreign_pre_chain": _LOG_PRE_CHAIN,
             "processors": [
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 structlog.processors.JSONRenderer(),
@@ -264,31 +282,7 @@ LOGGING = {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-        "general": {
-            "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOG_DIR / "general.log",
-            "maxBytes": 1024 * 1024 * 15,
-            "backupCount": 5,
-            "formatter": "json",
-        },
-        "error_file": {
-            "level": "ERROR",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOG_DIR / "errors.log",
-            "maxBytes": 1024 * 1024 * 15,
-            "backupCount": 5,
-            "formatter": "json",
-        },
-        "security_file": {
-            "level": "WARNING",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOG_DIR / "security.log",
-            "maxBytes": 1024 * 1024 * 10,
-            "backupCount": 10,
-            "formatter": "json",
+            "formatter": env.str("DJANGO_LOG_FORMAT", default="verbose"),
         },
         "mail_admins": {
             "level": "ERROR",
@@ -299,24 +293,36 @@ LOGGING = {
     },
     "root": {
         "level": "INFO",
-        "handlers": ["console"],
+        "handlers": ["console", "mail_admins"],
     },
     "loggers": {
-        "": {"handlers": ["general", "error_file", "mail_admins"], "level": "WARNING"},
         "django": {
-            "handlers": ["general", "error_file", "mail_admins"],
+            "handlers": ["console", "mail_admins"],
             "propagate": False,
             "level": "INFO",
         },
         "django.request": {
-            "handlers": ["error_file", "mail_admins"],
+            "handlers": ["console", "mail_admins"],
             "level": "ERROR",
             "propagate": False,
         },
         "django.security": {
-            "handlers": ["security_file", "mail_admins"],
+            "handlers": ["console", "mail_admins"],
             "propagate": False,
             "level": "WARNING",
         },
     },
 }
+
+# Route structlog through the stdlib handlers above (django-structlog docs).
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        *_LOG_PRE_CHAIN,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)

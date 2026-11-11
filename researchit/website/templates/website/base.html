@@ -22,16 +22,15 @@
   <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock og_url %}" />
   <meta property="og:title" content="{% block og_title %}Research IT{% endblock og_title %}" />
   <meta property="og:description" content="{% block og_description %}Research IT{% endblock og_description %}" />
-  {# TODO: Add image #}
-  <meta property="og:image" content="{% block og_image %}{% static 'core/img/og-image.jpg' %}{% endblock og_image %}" />
+  {# TODO: replace with a 1200x630 social image (and switch twitter:card back to summary_large_image) #}
+  <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'core/img/favicons/rit_favicon_512x512.png' %}{% endblock og_image %}" />
 
   {# Twitter Meta Tags #}
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="summary" />
   <meta name="twitter:url" content="{% block twitter_url %}{{ request.build_absolute_uri }}{% endblock twitter_url %}" />
   <meta name="twitter:title" content="{% block twitter_title %}Research IT{% endblock twitter_title %}" />
   <meta name="twitter:description" content="{% block twitter_description %}Research IT{% endblock twitter_description %}" />
-  {# TODO: Add image #}
-  <meta name="twitter:image" content="{% block twitter_image %}{% static 'core/img/twitter-image.jpg' %}{% endblock twitter_image %}" />
+  <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'core/img/favicons/rit_favicon_512x512.png' %}{% endblock twitter_image %}" />
   {% endblock head_seo_tags %}
 
   {% block extra_head %}{% endblock extra_head %}
@@ -48,6 +47,11 @@
   {% endblock css %}
 
   {% block extra_css %}{% endblock extra_css %}
+
+  {# Analytics: Umami (cookieless, self-hosted). Only rendered when configured. #}
+  {% if umami_script_url %}
+  <script defer src="{{ umami_script_url }}" data-website-id="{{ umami_website_id }}"></script>
+  {% endif %}
 
 </head>
 <body class="{% block bodyclass %}{% endblock bodyclass %}">

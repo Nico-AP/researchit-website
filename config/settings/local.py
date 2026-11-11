@@ -1,5 +1,7 @@
+from pathlib import Path
+
 from .base import *  # noqa: F403
-from .base import DEBUG, INSTALLED_APPS, LOGGING, MIDDLEWARE, env
+from .base import BASE_DIR, DEBUG, INSTALLED_APPS, LOGGING, MIDDLEWARE, env
 
 # Cache
 # ------------------------------------------------------------------------------
@@ -27,10 +29,34 @@ EMAIL_BACKEND = env(
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#logging
 
-LOGGING["loggers"][""]["handlers"].append("console")
-LOGGING["loggers"]["django"]["handlers"].append("console")
-LOGGING["loggers"]["django.request"]["handlers"].append("console")
-LOGGING["loggers"]["django.security"]["handlers"].append("console")
+# Locally, additionally write rotating JSON log files to BASE_DIR / "logs".
+
+LOG_DIR = BASE_DIR / "logs"
+Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
+
+
+def _file_handler(filename, level, max_mb, backups):
+    return {
+        "level": level,
+        "class": "logging.handlers.RotatingFileHandler",
+        "filename": LOG_DIR / filename,
+        "maxBytes": 1024 * 1024 * max_mb,
+        "backupCount": backups,
+        "formatter": "json",
+    }
+
+
+LOGGING["handlers"].update(
+    {
+        "general": _file_handler("general.log", "INFO", 15, 5),
+        "error_file": _file_handler("errors.log", "ERROR", 15, 5),
+        "security_file": _file_handler("security.log", "WARNING", 10, 10),
+    },
+)
+LOGGING["root"]["handlers"] += ["general", "error_file"]
+LOGGING["loggers"]["django"]["handlers"] += ["general", "error_file"]
+LOGGING["loggers"]["django.request"]["handlers"] += ["error_file"]
+LOGGING["loggers"]["django.security"]["handlers"] += ["security_file"]
 
 
 # django-debug-toolbar - https://github.com/django-commons/django-debug-toolbar
