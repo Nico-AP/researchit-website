@@ -249,6 +249,59 @@ section { padding: 4rem 0; }
   h3 { font-size: 14px; font-weight: 600; color: var(--brand-text); margin: 1.5rem 0 0.5rem; }
   ul, ol { padding-left: 1.25rem; }
   hr { border-color: var(--brand-border); opacity: 1; }
+
+  /* Tables (StreamField "table" block): styled like the About fact card (.meta-card).
+     The wrapper is the card, so a wide table scrolls inside its frame on phones. */
+  .table-scroll {
+    margin: 1.25rem 0 1.75rem;
+    background: var(--brand-surface);
+    border: 1px solid var(--brand-border);
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  caption {
+    caption-side: top;
+    padding: 0.85rem 1.25rem 0;
+    color: var(--brand-text);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  th,
+  td {
+    padding: 0.7rem 1.25rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--brand-border);
+  }
+
+  // Column headings: the site's section-label style.
+  th {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--brand-green);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  // Rows: first column as a key, the rest as values (like .meta-key / .meta-val).
+  td { color: var(--brand-text); }
+  td:first-child { color: var(--brand-green-dim); }
+  tbody tr:last-child td { border-bottom: none; }
+  td p { margin: 0; }
+
+  @media (max-width: 575.98px) {
+    th, td { padding: 0.6rem 0.9rem; }
+  }
 }
 
 .footer-legal a { color: var(--brand-muted); }

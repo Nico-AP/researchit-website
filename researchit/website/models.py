@@ -7,9 +7,11 @@
 
 from django.db import models
 from modelcluster.fields import ParentalKey
+from wagtail import blocks
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
-from wagtail.fields import RichTextField
+from wagtail.contrib.typed_table_block.blocks import TypedTableBlock
+from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Orderable, Page
 
 from researchit.website.seo import RequestHostSitemapMixin
@@ -166,7 +168,24 @@ class StandardPage(RequestHostSitemapMixin, Page):
     parent_page_types = ["researchit_website.HomePage"]
     subpage_types: list[str] = []
 
-    body = RichTextField(features=BODY_FEATURES, blank=True)
+    # Text and tables (Wagtail's rich text editor has no tables). Each table column
+    # is plain text or rich text (bold, italic, links); headings go in <thead>.
+    body = StreamField(
+        [
+            ("text", blocks.RichTextBlock(features=BODY_FEATURES)),
+            (
+                "table",
+                TypedTableBlock(
+                    [
+                        ("text", blocks.CharBlock()),
+                        ("rich_text", blocks.RichTextBlock(features=INLINE_FEATURES)),
+                    ],
+                    template="website/blocks/table.html",
+                ),
+            ),
+        ],
+        blank=True,
+    )
 
     content_panels = [*Page.content_panels, FieldPanel("body")]
 

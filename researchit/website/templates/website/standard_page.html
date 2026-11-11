@@ -11,7 +11,7 @@
   <div class="container">
     <h1 class="standard-page-title">{{ page.title }}</h1>
     <div class="standard-page-body">
-      {{ page.body|richtext }}
+      {% for block in page.body %}{% include_block block %}{% endfor %}
     </div>
   </div>
 </section>

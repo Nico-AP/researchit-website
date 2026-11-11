@@ -67,13 +67,35 @@ class SeededContentTests(TestCase):
             instance=StandardPage(
                 title="Impressum",
                 slug="impressum",
-                body="<p>Legal text</p>",
+                body=json.dumps(
+                    [
+                        {"type": "text", "value": "<p>Legal text</p>"},
+                        {
+                            "type": "table",
+                            "value": {
+                                "caption": "Retention",
+                                "columns": [
+                                    {"type": "text", "heading": "Data"},
+                                    {"type": "rich_text", "heading": "Kept for"},
+                                ],
+                                "rows": [
+                                    {"values": ["Server logs", "<p><b>60</b> days</p>"]}
+                                ],
+                            },
+                        },
+                    ]
+                ),
                 show_in_menus=True,
             )
         )
         r = self.client.get(page.url)
         assert r.status_code == 200
         self.assertContains(r, "Legal text")
+        self.assertContains(r, '<div class="table-scroll">')
+        self.assertContains(r, "<caption>Retention</caption>")
+        self.assertContains(r, '<th scope="col">Kept for</th>', html=False)
+        self.assertContains(r, "<td>Server logs</td>")
+        self.assertContains(r, "<b>60</b> days")
         self.assertContains(self.client.get("/"), 'href="/impressum/"')
 
     def test_unknown_url_is_404(self):
@@ -102,7 +124,11 @@ class SeededContentTests(TestCase):
 
     def add_impressum(self):
         return HomePage.objects.get().add_child(
-            instance=StandardPage(title="Impressum", slug="impressum", body="<p>x</p>")
+            instance=StandardPage(
+                title="Impressum",
+                slug="impressum",
+                body=json.dumps([{"type": "text", "value": "<p>x</p>"}]),
+            )
         )
 
     @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
