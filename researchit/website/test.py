@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied
-from django.test import Client, RequestFactory, TestCase
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.views.csrf import csrf_failure
 from django.views.defaults import permission_denied
 from wagtail.models import Page, Site
@@ -92,6 +92,50 @@ class SeededContentTests(TestCase):
         self.assertContains(r, '<main id="main-content"', status_code=403)
         r = csrf_failure(request, reason="test")
         self.assertContains(r, "<title>Request blocked</title>", status_code=403)
+
+    def add_impressum(self):
+        return HomePage.objects.get().add_child(
+            instance=StandardPage(title="Impressum", slug="impressum", body="<p>x</p>")
+        )
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_robots_txt_points_to_sitemap(self):
+        r = self.client.get("/robots.txt", secure=True)
+        assert r.status_code == 200
+        assert r["Content-Type"].startswith("text/plain")
+        self.assertContains(r, "Sitemap: https://testserver/sitemap.xml")
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_sitemap_uses_request_host_not_seeded_site(self):
+        # The seeded Wagtail Site is localhost:80; URLs must follow the real host.
+        self.add_impressum()
+        r = self.client.get("/sitemap.xml", secure=True)
+        assert r.status_code == 200
+        self.assertContains(r, "<loc>https://testserver/</loc>")
+        self.assertContains(r, "<loc>https://testserver/impressum/</loc>")
+        self.assertNotContains(r, "localhost")
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_canonical_url_ignores_query_string(self):
+        self.add_impressum()
+        for url, canonical in [
+            ("/?utm_source=newsletter", "https://testserver/"),
+            ("/impressum/?ref=x", "https://testserver/impressum/"),
+        ]:
+            r = self.client.get(url, secure=True)
+            self.assertContains(r, f'<link rel="canonical" href="{canonical}" />')
+            self.assertContains(r, f'<meta property="og:url" content="{canonical}" />')
+            self.assertNotContains(r, "utm_source")
+
+    def test_error_pages_have_no_canonical(self):
+        r = self.client.get("/does-not-exist/")
+        self.assertNotContains(r, 'rel="canonical"', status_code=404)
+
+    def test_hero_is_not_hidden_by_fade_in(self):
+        html = self.client.get("/").content.decode()
+        hero = html.split('<section class="hero"')[1].split("</section>")[0]
+        assert "fade-up" not in hero
+        assert "fade-up" in html  # the sections below still fade in
 
     def test_only_one_homepage_allowed(self):
         assert not HomePage.can_create_at(Page.objects.get(depth=1))

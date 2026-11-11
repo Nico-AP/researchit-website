@@ -1,34 +1,35 @@
 {% load static %}
 
+{# No fade-in here: the hero is the first thing people (and page-speed metrics) see. #}
 <section class="hero" id="home">
   <div class="container hero-inner">
-    <div class="fade-up">
+    <div>
       <div class="logo-block">
         <img src="{% static 'core/img/logo/rit_logo.svg' %}" alt="Pfiffner Research IT" class="main-logo" />
       </div>
     </div>
 
     {% if page.hero_tagline %}
-    <div class="fade-up">
+    <div>
       <p class="hero-tagline">{{ page.hero_tagline }}</p>
     </div>
     {% endif %}
 
     {% if page.hero_headline %}
-    <div class="fade-up">
+    <div>
       <h1 class="hero-headline">{{ page.hero_headline|linebreaksbr }}</h1>
     </div>
     {% endif %}
 
     {% if page.hero_text %}
-    <div class="fade-up">
+    <div>
       <p class="hero-sub">{{ page.hero_text }}</p>
     </div>
     {% endif %}
 
     {% with email=settings.researchit_website.BusinessSettings.contact_email %}
     {% if email %}
-    <div class="fade-up d-flex flex-wrap gap-3">
+    <div class="d-flex flex-wrap gap-3">
       <a class="btn-primary-brand" href="mailto:{{ email }}">{{ page.cta_label }}</a>
     </div>
     {% endif %}

@@ -1,4 +1,4 @@
-{% load static wagtailcore_tags %}
+{% load static wagtailcore_tags website_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -14,12 +14,14 @@
 
   {# SEO Meta Tags #}
   {% block head_seo_tags %}
+  {% canonical_url as canonical %}
+  <link rel="canonical" href="{{ canonical }}" />
   <meta name="description" content="{% block description %}{% if page.search_description %}{{ page.search_description }}{% else %}Pfiffner Research IT{% endif %}{% endblock description %}" />
   <meta name="keywords" content="{% block keywords %}Social Science Research, Data Donation, Research Consultant, Research Infrastructure Development{% endblock keywords %}" />
 
   {# Open Graph / Facebook Meta Tags #}
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock og_url %}" />
+  <meta property="og:url" content="{% block og_url %}{{ canonical }}{% endblock og_url %}" />
   <meta property="og:title" content="{% block og_title %}{{ page.seo_title|default:page.title|default:"Pfiffner Research IT" }}{% endblock og_title %}" />
   <meta property="og:description" content="{% block og_description %}{% if page.search_description %}{{ page.search_description }}{% else %}Pfiffner Research IT{% endif %}{% endblock og_description %}" />
   {# TODO: replace with a 1200x630 social image (and switch twitter:card back to summary_large_image) #}
@@ -27,7 +29,7 @@
 
   {# Twitter Meta Tags #}
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:url" content="{% block twitter_url %}{{ request.build_absolute_uri }}{% endblock twitter_url %}" />
+  <meta name="twitter:url" content="{% block twitter_url %}{{ canonical }}{% endblock twitter_url %}" />
   <meta name="twitter:title" content="{% block twitter_title %}{{ page.seo_title|default:page.title|default:"Pfiffner Research IT" }}{% endblock twitter_title %}" />
   <meta name="twitter:description" content="{% block twitter_description %}{% if page.search_description %}{{ page.search_description }}{% else %}Pfiffner Research IT{% endif %}{% endblock twitter_description %}" />
   <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'core/img/favicons/rit_favicon_512x512.png' %}{% endblock twitter_image %}" />
