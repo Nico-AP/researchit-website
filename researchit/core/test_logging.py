@@ -1,9 +1,11 @@
 import logging
+import sys
+from unittest import mock
 
 from django.core import mail
 from django.test import RequestFactory, SimpleTestCase, override_settings
 
-from config.logging_utils import anonymize_ip_processor
+from config.logging_utils import ThrottledAdminEmailFilter, anonymize_ip_processor
 from researchit.core.error_reports import _mask_ip_list
 
 
@@ -70,3 +72,40 @@ class ErrorMailIpMaskingTests(SimpleTestCase):
             _mask_ip_list("203.0.113.77, not-an-ip"),
             "203.0.113.0, ********************",
         )
+
+
+class ThrottledAdminEmailFilterTests(SimpleTestCase):
+    def record(self):
+        try:
+            msg = "boom"
+            raise RuntimeError(msg)  # noqa: TRY301
+        except RuntimeError:
+            return logging.LogRecord(
+                "django.request",
+                logging.ERROR,
+                __file__,
+                1,
+                "Error",
+                (),
+                sys.exc_info(),
+            )
+
+    def test_first_error_passes_right_after_boot(self):
+        # monotonic() counts from boot: a fresh server or CI runner is at a few
+        # seconds, which must not look like "an error was just sent".
+        log_filter = ThrottledAdminEmailFilter(throttle_seconds=300)
+        with mock.patch("config.logging_utils.time.monotonic", return_value=5.0):
+            self.assertTrue(log_filter.filter(self.record()))
+
+    def test_repeats_are_throttled_then_counted(self):
+        log_filter = ThrottledAdminEmailFilter(throttle_seconds=300)
+        clock = mock.patch("config.logging_utils.time.monotonic")
+        with clock as monotonic:
+            monotonic.return_value = 1000.0
+            self.assertTrue(log_filter.filter(self.record()))
+            monotonic.return_value = 1100.0
+            self.assertFalse(log_filter.filter(self.record()))
+            monotonic.return_value = 1400.0
+            record = self.record()
+            self.assertTrue(log_filter.filter(record))
+            self.assertIn("1 similar error(s) suppressed", record.msg)
