@@ -59,9 +59,11 @@ class ThrottledAdminEmailFilter(logging.Filter):
     def filter(self, record):
         signature = self._get_signature(record)
         now = time.monotonic()
-        last_sent = self._timestamps.get(signature, 0)
+        # None = never sent. Not 0: monotonic() counts from boot, so a default of 0
+        # would swallow every error in the first throttle_seconds after a reboot.
+        last_sent = self._timestamps.get(signature)
 
-        if now - last_sent < self.throttle_seconds:
+        if last_sent is not None and now - last_sent < self.throttle_seconds:
             self._suppressed_counts[signature] += 1
             return False
 
