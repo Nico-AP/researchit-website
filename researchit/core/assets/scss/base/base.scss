@@ -34,8 +34,8 @@ p a, li a:not(.nav-link):not(.btn-nav-cta) {
 }
 
 /* ── Keyboard focus: one clearly visible ring everywhere (WCAG 2.4.7) ──
-   Overrides Bootstrap's faint focus shadows; the cookie banner keeps its own styles. */
-:focus-visible:not(#cc-main *) {
+   Overrides Bootstrap's faint focus shadows. */
+:focus-visible {
   outline: 2px solid var(--brand-green) !important;
   outline-offset: 3px;
   box-shadow: none !important;
