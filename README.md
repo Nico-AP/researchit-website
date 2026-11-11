@@ -82,12 +82,13 @@ dependencies.
 ```bash
 uv run python manage.py test     # unit tests (fresh DB, runs all migrations)
 uv run coverage run manage.py test && uv run coverage report
-uv run pre-commit run --all-files  # ruff, djLint, uv-lock, pip-audit, ...
+uv run pre-commit run --all-files  # ruff, djLint, uv-lock, ...
 ```
 
-The tests are in `researchit/website/test.py`. They check the seeded content, the
-settings-driven contact details, standard pages and the footer, and the 404 page. They pass
-with local and with production settings.
+**CI** (`.github/workflows/test.yml`) runs on every push and pull request:
+- **lint:** all pre-commit hooks, plus `pip-audit` on the production dependencies
+- **test:** checks that no migrations are missing, then runs the tests against Postgres 18
+  (the version the server uses), with coverage that must stay at or above 80%
 
 ### Testing the production image
 

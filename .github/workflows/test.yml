@@ -1,0 +1,78 @@
+# Lint + tests on every push and pull request (any branch, including dev).
+# The image itself is built and checked by docker.yml.
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.13"
+          enable-cache: true
+
+      - run: uv sync --locked
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      # ruff, djLint, uv-lock, file hygiene, ...
+      - name: pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+      # Runs on pre-push locally, so run it explicitly here.
+      - name: pip-audit (production dependencies)
+        run: |
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt \
+            | uv run --frozen pip-audit --disable-pip --require-hashes -r /dev/stdin
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine  # keep in sync with researchit-deploy (group_data/all.py)
+        env:
+          POSTGRES_USER: web
+          POSTGRES_PASSWORD: web
+          POSTGRES_DB: web
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U web -d web"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DJANGO_SECRET_KEY: ci-only-not-secret
+      DATABASE_URL: postgres://web:web@localhost:5432/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.13"
+          enable-cache: true
+
+      - run: uv sync --locked
+
+      - name: Migrations are complete
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Tests (Postgres) with coverage
+        run: |
+          uv run coverage run manage.py test
+          uv run coverage report  # fails below fail_under in pyproject.toml

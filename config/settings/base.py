@@ -130,11 +130,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# SQLite by default; set DATABASE_URL to use Postgres (CI does, to match production).
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": env.dj_db_url(
+        "DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    ),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
