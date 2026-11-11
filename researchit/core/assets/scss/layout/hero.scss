@@ -28,51 +28,14 @@
 
 .hero-inner { position: relative; z-index: 1; }
 
-/* logo mark */
-.logo-block {
-  display: inline-flex;
-  align-items: stretch;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-}
+/* logo mark (SVG: researchit/core/static/core/img/logo/rit_logo.svg) */
+.logo-block { margin-bottom: 1.5rem; }
 
-.logo-dark {
-  background: #0d3d2b;
-  padding: 0.75rem 1.1rem 0.75rem 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.logo-rit-vert {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: 8px;
-  color: var(--brand-green);
-  letter-spacing: 0.12em;
-  opacity: 0.8;
-}
-
-.logo-research-text {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: var(--brand-green);
-  line-height: 1;
-  letter-spacing: -0.01em;
-}
-
-.logo-it-box {
-  background: var(--brand-green);
-  padding: 0.75rem 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.logo-it-text {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #0b1612;
-  line-height: 1;
+.main-logo {
+  display: block;
+  width: 360px;
+  max-width: 100%;
+  height: auto;
 }
 
 .hero-tagline {

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static wagtailcore_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,27 +9,27 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
   {# Basic SEO Tags #}
-  <title>{% block page_title %}Pfiffner Research IT{% endblock page_title %}</title>
-  <meta name="Nico Pfiffner" content="Pfiffner Research IT" />
+  <title>{% block page_title %}{% if page %}{{ page.seo_title|default:page.title }}{% else %}Pfiffner Research IT{% endif %}{% endblock page_title %}</title>
+  <meta name="author" content="Nico Pfiffner" />
 
   {# SEO Meta Tags #}
   {% block head_seo_tags %}
-  <meta name="description" content="{% block description %}Pfiffner Research IT{% endblock description %}" />
+  <meta name="description" content="{% block description %}{% if page.search_description %}{{ page.search_description }}{% else %}Pfiffner Research IT{% endif %}{% endblock description %}" />
   <meta name="keywords" content="{% block keywords %}Social Science Research, Data Donation, Research Consultant, Research Infrastructure Development{% endblock keywords %}" />
 
   {# Open Graph / Facebook Meta Tags #}
   <meta property="og:type" content="website" />
   <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock og_url %}" />
-  <meta property="og:title" content="{% block og_title %}Research IT{% endblock og_title %}" />
-  <meta property="og:description" content="{% block og_description %}Research IT{% endblock og_description %}" />
+  <meta property="og:title" content="{% block og_title %}{{ page.seo_title|default:page.title|default:"Pfiffner Research IT" }}{% endblock og_title %}" />
+  <meta property="og:description" content="{% block og_description %}{% if page.search_description %}{{ page.search_description }}{% else %}Pfiffner Research IT{% endif %}{% endblock og_description %}" />
   {# TODO: replace with a 1200x630 social image (and switch twitter:card back to summary_large_image) #}
   <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'core/img/favicons/rit_favicon_512x512.png' %}{% endblock og_image %}" />
 
   {# Twitter Meta Tags #}
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:url" content="{% block twitter_url %}{{ request.build_absolute_uri }}{% endblock twitter_url %}" />
-  <meta name="twitter:title" content="{% block twitter_title %}Research IT{% endblock twitter_title %}" />
-  <meta name="twitter:description" content="{% block twitter_description %}Research IT{% endblock twitter_description %}" />
+  <meta name="twitter:title" content="{% block twitter_title %}{{ page.seo_title|default:page.title|default:"Pfiffner Research IT" }}{% endblock twitter_title %}" />
+  <meta name="twitter:description" content="{% block twitter_description %}{% if page.search_description %}{{ page.search_description }}{% else %}Pfiffner Research IT{% endif %}{% endblock twitter_description %}" />
   <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'core/img/favicons/rit_favicon_512x512.png' %}{% endblock twitter_image %}" />
   {% endblock head_seo_tags %}
 

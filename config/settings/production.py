@@ -3,7 +3,7 @@
 Environment variables (set by the deploy repo, stacks/web/app.env.j2):
 DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, DJANGO_CSRF_TRUSTED_ORIGINS,
 DATABASE_URL, EMAIL_URL, DEFAULT_FROM_EMAIL. Optional: UMAMI_SCRIPT_URL,
-UMAMI_WEBSITE_ID, ADMINS, ADMIN_URL.
+UMAMI_WEBSITE_ID, ADMINS, ADMIN_URL, WAGTAILADMIN_BASE_URL.
 """
 
 from urllib.parse import urlsplit
@@ -12,7 +12,13 @@ import dj_email_url
 from csp.constants import NONE, SELF
 
 from .base import *  # noqa: F403
-from .base import MIDDLEWARE, UMAMI_SCRIPT_URL, UMAMI_WEBSITE_ID, env
+from .base import (
+    MIDDLEWARE,
+    UMAMI_SCRIPT_URL,
+    UMAMI_WEBSITE_ID,
+    WAGTAILADMIN_URL,
+    env,
+)
 
 # Database
 # ------------------------------------------------------------------------------
@@ -58,7 +64,8 @@ SECURE_HSTS_SECONDS = 31536000  # = 1 year
 SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"  # matches CSP frame-ancestors 'none' and Caddy's header
+X_FRAME_OPTIONS = "DENY"  # matches CSP frame-ancestors 'none'
+# (Wagtail's live-preview views override this with SAMEORIGIN for their iframe.)
 
 # django-csp - https://django-csp.readthedocs.io/en/latest/configuration.html
 
@@ -68,6 +75,9 @@ if UMAMI_SCRIPT_URL and UMAMI_WEBSITE_ID:
     _analytics = [f"{_parts.scheme}://{_parts.netloc}"]
 
 CONTENT_SECURITY_POLICY = {
+    # The Wagtail admin relies on inline scripts/styles, so the strict policy
+    # is not applied there. It is login-protected; public pages keep the CSP.
+    "EXCLUDE_URL_PREFIXES": [f"/{WAGTAILADMIN_URL}"],
     "DIRECTIVES": {
         "default-src": [NONE],
         "script-src": [SELF, *_analytics],

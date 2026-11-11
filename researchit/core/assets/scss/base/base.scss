@@ -169,3 +169,36 @@ section { padding: 4rem 0; }
 .fade-up:nth-child(3) { transition-delay: 0.19s; }
 .fade-up:nth-child(4) { transition-delay: 0.26s; }
 .fade-up:nth-child(5) { transition-delay: 0.33s; }
+
+/* ─────────────────────────────────────
+   STANDARD PAGE (Impressum, privacy policy, ...)
+───────────────────────────────────── */
+.standard-page .container { max-width: 760px; }
+
+.standard-page-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--brand-text);
+  margin-bottom: 2rem;
+}
+
+.standard-page-body {
+  color: var(--brand-muted);
+  line-height: 1.8;
+
+  h2 { font-size: 16px; font-weight: 600; color: var(--brand-text); margin: 2rem 0 0.75rem; }
+  h3 { font-size: 14px; font-weight: 600; color: var(--brand-text); margin: 1.5rem 0 0.5rem; }
+  ul, ol { padding-left: 1.25rem; }
+  hr { border-color: var(--brand-border); opacity: 1; }
+}
+
+.footer-legal a { color: var(--brand-faint); }
+.footer-legal a:hover { color: var(--brand-green); }
+
+
+.qr-svg-container {
+  background: #fff;
+  padding: 1rem;
+  display: inline-block;
+  border-radius: 4px;
+}

@@ -4,21 +4,18 @@
 {% endblock head_seo_tags %}
 
 {% block extra_head %}
-    {# Prevent indexing of private pages #}
-    <meta name="robots" content="noindex, nofollow" />
+  <meta name="robots" content="noindex, nofollow" />
 {% endblock extra_head %}
 
-{% block title %}
-  Page not found
-{% endblock title %}
+{% block page_title %}Page not found{% endblock page_title %}
 
-{% block content %}
-  <h1>Page not found</h1>
-  <p>
-    {% if exception %}
-      {{ exception }}
-    {% else %}
-      This is not the page you were looking for.
-    {% endif %}
-  </p>
-{% endblock content %}
+{% block main %}
+{% include "website/navbar.html" %}
+<section class="standard-page">
+  <div class="container">
+    <h1 class="standard-page-title">Page not found</h1>
+    <p>This is not the page you were looking for. <a href="/">Back to the homepage</a>.</p>
+  </div>
+</section>
+{% include "website/footer.html" %}
+{% endblock main %}

@@ -41,8 +41,8 @@ CookieConsent.run({
           showPreferencesBtn: 'Learn more',
           // closeIconLabel: 'Reject all and close modal',
           footer: `
-                        <a href="/contact" target="_blank">Impressum</a>
-                        <a href="/dps" target="_blank">Privacy Policy</a>
+                        <a href="/impressum/" target="_blank">Impressum</a>
+                        <a href="/privacy/" target="_blank">Privacy Policy</a>
                     `,
         },
         preferencesModal: {

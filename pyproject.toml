@@ -8,10 +8,13 @@ dependencies = [
     "argon2-cffi==25.1.0",         # https://github.com/hynek/argon2_cffi
     "django==5.2.19",              # stay with 5.2.x - LTS until 2028
     "django-csp==4.0",             # https://django-csp.readthedocs.io/
+    "django-otp==1.7.5",
     "django-structlog==10.0.0",    # https://github.com/jrobichaud/django-structlog
     "environs[django]==14.5.0",    # https://pypi.org/project/environs/
     "gunicorn==25.0.3",            # https://github.com/benoitc/gunicorn
     "psycopg[binary]==3.3.2",      # https://www.psycopg.org/psycopg3/
+    "qrcode==8.2",
+    "wagtail==8.1",
     "whitenoise[brotli]==6.12.0",  # https://github.com/evansd/whitenoise
 ]
 
@@ -79,7 +82,8 @@ close_void_tags = true
 format_css = true
 format_js = true
 # TODO: remove T002 when fixed https://github.com/djlint/djLint/issues/687
-ignore = "H006,H030,H031,T002"
+# D018: links to "/" and "/#section" are fine - pages are routed by Wagtail, not {% url %}.
+ignore = "D018,H006,H030,H031,T002"
 include = "H017,H035"
 indent = 2
 max_line_length = 119

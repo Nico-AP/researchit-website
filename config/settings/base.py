@@ -53,12 +53,30 @@ THIRD_PARTY_APPS = [
     "csp",
     "django_structlog",
 ]
+
+WAGTAIL_APPS = [
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "wagtail.contrib.redirects",
+    "wagtail.contrib.settings",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "modelcluster",
+    "taggit",
+]
 LOCAL_APPS = [
     "researchit.core",
     "researchit.website",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + WAGTAIL_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     # First: answers /healthz before host validation and the HTTPS redirect.
@@ -69,10 +87,14 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # 2FA: admin users must confirm a TOTP code after login (CMS and Django admin).
+    "django_otp.middleware.OTPMiddleware",
+    "researchit.core.twofactor.RequireOTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
     "django_structlog.middlewares.RequestMiddleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -95,6 +117,7 @@ TEMPLATES = [
                 "django.template.context_processors.media",
                 "django.template.context_processors.static",
                 "researchit.core.context_processors.analytics",
+                "wagtail.contrib.settings.context_processors.settings",
             ],
         },
     },
@@ -213,6 +236,27 @@ ADMIN_URL = env.str("ADMIN_URL", default="admin/")
 ADMINS = [tuple(admin) for admin in json.loads(env.str("ADMINS", "[]"))]
 
 MANAGERS = ADMINS
+
+
+# Wagtail CMS
+# ------------------------------------------------------------------------------
+# https://docs.wagtail.org/en/stable/reference/settings.html
+
+WAGTAIL_SITE_NAME = "Pfiffner Research IT"
+WAGTAILADMIN_URL = env.str("WAGTAILADMIN_URL", default="cms/")
+# Used in notification e-mails and the admin's "view live" links.
+WAGTAILADMIN_BASE_URL = env.str(
+    "WAGTAILADMIN_BASE_URL", default="http://localhost:8000"
+)
+WAGTAILSEARCH_BACKENDS = {"default": {"BACKEND": "wagtail.search.backends.database"}}
+WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "pdf", "pptx", "txt", "xlsx", "zip"]
+WAGTAILIMAGES_MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000  # large page forms in the Wagtail admin
+
+# Two-factor auth (TOTP, an authenticator app) for every user with admin access;
+# see researchit/core/twofactor.py. Users without one set it up after their first login.
+TWO_FACTOR_REQUIRED = env.bool("TWO_FACTOR_REQUIRED", default=True)
+OTP_TOTP_ISSUER = WAGTAIL_SITE_NAME  # name shown in the authenticator app
 
 
 # Analytics (Umami, cookieless) - only rendered when both values are set
