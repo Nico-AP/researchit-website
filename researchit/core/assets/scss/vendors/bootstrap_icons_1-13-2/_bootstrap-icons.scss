@@ -35,6 +35,10 @@ $bi-icons: (
   -moz-osx-font-smoothing: grayscale;
 }
 
+// <i> is italic by default; without this the browser downloads the italic
+// JetBrains Mono file just for the (empty) icon elements.
+.bi { font-style: normal; }
+
 @each $name, $codepoint in $bi-icons {
   .bi-#{$name}::before { content: $codepoint; }
 }

@@ -43,6 +43,9 @@
   <link rel="icon" href="{% static 'core/img/favicons/rit_favicon_192x192.png' %}"  type="image/png" sizes="192x192" />
   <link rel="icon" href="{% static 'core/img/favicons/rit_favicon_32x32.png' %}"  type="image/png" sizes="32x32" />
 
+  {# Fetch the main font early; crossorigin is required for font preloads, even same-origin. #}
+  <link rel="preload" href="{% static 'core/fonts/jetbrains_mono/JetBrainsMono[wght].woff2' %}" as="font" type="font/woff2" crossorigin />
+
   {# CSS #}
   {% block css %}
   <link rel="stylesheet" href="{% static 'core/css/researchit.css' %}" />
