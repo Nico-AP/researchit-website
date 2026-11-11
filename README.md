@@ -64,6 +64,19 @@ npm run sass:watch   # while developing
 npm run sass:build   # minified build before committing
 ```
 
+### Icons
+
+[Bootstrap Icons](https://icons.getbootstrap.com/) are used as a font
+(`<i class="bi bi-envelope" aria-hidden="true"></i>`), but the stylesheet only contains the
+icons the site uses. To add one:
+
+1. Find the icon on icons.getbootstrap.com; its page lists the Unicode codepoint (e.g. `U+F32F`).
+2. Add it to `$bi-icons` in `researchit/core/assets/scss/vendors/bootstrap_icons_1-13-2/_bootstrap-icons.scss`,
+   e.g. `"envelope": "\f32f",`.
+3. Rebuild the CSS (`npm run sass:build`) and commit both files.
+
+The font file already contains every icon, so nothing else needs downloading.
+
 ### Dependencies
 
 ```bash
