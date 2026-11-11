@@ -6,7 +6,7 @@ ARG PYTHON_VERSION=3.12
 
 # --- build: install locked dependencies with uv, collect static files ----------
 FROM python:${PYTHON_VERSION}-slim-trixie AS build
-COPY --from=ghcr.io/astral-sh/uv:0.12.13 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.24 /uv /bin/uv
 # Venv outside /app; use the image's Python, never download one; copy (not
 # hardlink) from the cache mount; precompile bytecode for faster startup.
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \

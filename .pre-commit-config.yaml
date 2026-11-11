@@ -22,14 +22,14 @@ repos:
       - id: detect-private-key
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: '1.27.0'
+    rev: '1.33.0'
     hooks:
       - id: django-upgrade
         args: ['--target-version', '5.2']
 
   # Keep uv.lock in sync with pyproject.toml.
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.13
+    rev: 0.12.24
     hooks:
       - id: uv-lock
 
@@ -48,7 +48,7 @@ repos:
 
   # Run the Ruff linter.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.10
+    rev: v0.17.4
     hooks:
       # Linter
       - id: ruff-check
@@ -56,8 +56,8 @@ repos:
       # Formatter
       - id: ruff-format
 
-  - repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.36.4
+  - repo: https://github.com/djlint/djLint
+    rev: v1.49.10
     hooks:
       # - id: djlint-reformat-django
       - id: djlint-django
