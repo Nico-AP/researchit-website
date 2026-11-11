@@ -1,12 +1,22 @@
+{% load wagtailcore_tags website_tags %}
+
+{% with biz=settings.researchit_website.BusinessSettings %}
 <footer>
   <div class="container">
     <div class="row">
       <div class="col">
-        <p class="footer-copy mb-0">© 2026 Pfiffner Research IT</p>
+        <p class="footer-copy mb-0">© {% now "Y" %} {{ biz.business_name }}</p>
       </div>
       <div class="col">
-        <p class="footer-legal mb-0">CVR 45784924 · Denmark</p>
+        <p class="footer-legal mb-0">
+          {% if biz.cvr_number %}CVR {{ biz.cvr_number }}{% endif %}{% if biz.cvr_number and biz.country %} · {% endif %}{{ biz.country }}
+          {% footer_pages as links %}
+          {% for link in links %}
+          · <a href="{% pageurl link %}">{{ link.title }}</a>
+          {% endfor %}
+        </p>
       </div>
     </div>
   </div>
 </footer>
+{% endwith %}

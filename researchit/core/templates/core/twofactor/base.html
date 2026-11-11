@@ -1,0 +1,38 @@
+{% extends "wagtailadmin/admin_base.html" %}
+{% load wagtailadmin_tags %}
+
+{% block bodyclass %}login{% endblock bodyclass %}
+
+{% block furniture %}
+  <main class="content-wrapper" id="main">
+    <h1>{% block heading %}{% endblock heading %}</h1>
+
+    <div class="messages" role="status">
+      {% if form.non_field_errors %}
+        <ul>
+          {% for error in form.non_field_errors %}<li class="error">{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    {% block intro %}{% endblock intro %}
+
+    <form class="login-form" method="post" autocomplete="off" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+      {% formattedfield form.token %}
+      <footer class="form-actions">
+        <button type="submit" class="button">{% block submit_label %}Verify{% endblock submit_label %}</button>
+      </footer>
+    </form>
+
+    <form method="post" action="{% url 'wagtailadmin_logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="button button-small button-secondary">Sign out</button>
+    </form>
+
+    <div class="login-logo">
+      {% include "wagtailadmin/logo.html" with wordmark="True" %}
+    </div>
+  </main>
+{% endblock furniture %}

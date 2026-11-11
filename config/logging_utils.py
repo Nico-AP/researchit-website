@@ -1,10 +1,19 @@
 """Logging utilities for GDPR-compliant logging and email throttling."""
 
-import hashlib
 import ipaddress
 import logging
 import time
 from collections import defaultdict
+
+
+def mask_ip(value: str) -> str:
+    """Mask one IP address: IPv4 keeps /24, IPv6 keeps /48.
+
+    Raises ValueError if the value is not an IP address.
+    """
+    ip = ipaddress.ip_address(value.strip())
+    prefix = 24 if isinstance(ip, ipaddress.IPv4Address) else 48
+    return str(ipaddress.ip_network(f"{ip}/{prefix}", strict=False).network_address)
 
 
 def anonymize_ip_processor(logger, method_name, event_dict):
@@ -12,25 +21,14 @@ def anonymize_ip_processor(logger, method_name, event_dict):
 
     IPv4: Masks last octet (192.168.1.100 -> 192.168.1.0).
     IPv6: Masks last 80 bits (keeps /48 prefix).
-    Adds ip_hash (first 8 chars of SHA-256) for correlation.
+    No hash of the full IP is logged: with the prefix known, an unsalted hash is
+    trivially reversible (256 candidates for IPv4). Correlate via request_id.
     """
     if "ip" not in event_dict:
         return event_dict
 
-    ip_str = event_dict["ip"]
     try:
-        ip = ipaddress.ip_address(ip_str)
-        if isinstance(ip, ipaddress.IPv4Address):
-            octets = str(ip).split(".")
-            octets[-1] = "0"
-            anonymized = ".".join(octets)
-        else:
-            network = ipaddress.ip_network(f"{ip}/48", strict=False)
-            anonymized = str(network.network_address)
-
-        ip_hash = hashlib.sha256(ip_str.encode()).hexdigest()[:8]
-        event_dict["ip"] = anonymized
-        event_dict["ip_hash"] = ip_hash
+        event_dict["ip"] = mask_ip(event_dict["ip"])
     except ValueError:
         event_dict["ip"] = "invalid"
 

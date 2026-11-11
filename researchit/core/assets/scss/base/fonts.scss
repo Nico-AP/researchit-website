@@ -1,12 +1,19 @@
+// JetBrains Mono v2.304 (SIL Open Font License, see static/core/fonts/jetbrains_mono/OFL.txt),
+// the release's variable TTFs compressed losslessly to woff2.
+// swap: show text in the fallback monospace font until it loads, instead of hiding it.
+// The upright file is preloaded in website/base.html.
+
 @font-face {
   font-family: "JetBrains Mono";
-  src: url("../fonts/jetbrains_mono/JetBrainsMono[wght].ttf") format('truetype');
-  font-weight: 100 900;
+  src: url("../fonts/jetbrains_mono/JetBrainsMono[wght].woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
 }
 
 @font-face {
   font-family: "JetBrains Mono";
-  src: url("../fonts/jetbrains_mono/JetBrainsMono-Italic[wght].ttf") format('truetype');
+  src: url("../fonts/jetbrains_mono/JetBrainsMono-Italic[wght].woff2") format("woff2");
   font-style: italic;
-  font-weight: 100 900;
+  font-weight: 100 800;
+  font-display: swap;
 }

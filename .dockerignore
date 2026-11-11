@@ -1,0 +1,19 @@
+# Keep the build context small and free of local secrets/state.
+.git
+.github
+.idea
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.env
+.env.*
+!.env.example
+db.sqlite3
+logs/
+media/
+staticfiles/
+.sass/node_modules
+**/.DS_Store
+Dockerfile
+.dockerignore

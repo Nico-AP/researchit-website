@@ -1,0 +1,219 @@
+import json
+
+from django.core.exceptions import PermissionDenied
+from django.template.loader import render_to_string
+from django.test import Client, RequestFactory, TestCase, override_settings
+from django.views.csrf import csrf_failure
+from django.views.defaults import permission_denied
+from wagtail.models import Page, Site
+
+from researchit.website.models import BusinessSettings, HomePage, StandardPage
+
+
+class HttpsClient(Client):
+    """Requests over HTTPS, so tests also pass with production's SSL redirect.
+
+    Production trusts X-Forwarded-Proto from Caddy (SECURE_PROXY_SSL_HEADER).
+    """
+
+    def __init__(self, **defaults):
+        https = {
+            "wsgi.url_scheme": "https",
+            "SERVER_PORT": "443",
+            "HTTP_X_FORWARDED_PROTO": "https",
+        }
+        super().__init__(**https, **defaults)
+
+
+class SeededContentTests(TestCase):
+    """The seed migration replaces the hardcoded site; these pin its behaviour."""
+
+    client_class = HttpsClient
+
+    def test_homepage_is_site_root(self):
+        home = HomePage.objects.get()
+        assert Site.objects.get(is_default_site=True).root_page_id == home.pk
+        assert home.services.count() == 4
+        assert home.facts.count() == 4
+
+    def test_homepage_renders_seeded_content(self):
+        r = self.client.get("/")
+        assert r.status_code == 200
+        self.assertContains(
+            r,
+            "<title>Data Donation &amp; Research Infrastructure"
+            " | Pfiffner Research IT</title>",
+        )
+        self.assertContains(
+            r, "Data collection systems<br>built on research expertise."
+        )
+        self.assertContains(r, "Research Infrastructure Development")
+        self.assertContains(r, "45784924")
+        self.assertContains(r, 'href="https://github.com/uzh/ddm"')
+        self.assertContains(r, "mailto:nico@pfiffner-researchit.com")
+
+    def test_settings_drive_contact_details(self):
+        biz = BusinessSettings.load()
+        biz.contact_email = "hello@example.com"
+        biz.github_url = ""
+        biz.save()
+        r = self.client.get("/")
+        self.assertContains(r, "mailto:hello@example.com")
+        self.assertNotContains(r, "bi-github")
+
+    def test_standard_page_renders_and_shows_in_footer(self):
+        home = HomePage.objects.get()
+        page = home.add_child(
+            instance=StandardPage(
+                title="Impressum",
+                slug="impressum",
+                body=json.dumps(
+                    [
+                        {"type": "text", "value": "<p>Legal text</p>"},
+                        {
+                            "type": "table",
+                            "value": {
+                                "caption": "Retention",
+                                "columns": [
+                                    {"type": "text", "heading": "Data"},
+                                    {"type": "rich_text", "heading": "Kept for"},
+                                ],
+                                "rows": [
+                                    {"values": ["Server logs", "<p><b>60</b> days</p>"]}
+                                ],
+                            },
+                        },
+                    ]
+                ),
+                show_in_menus=True,
+            )
+        )
+        r = self.client.get(page.url)
+        assert r.status_code == 200
+        self.assertContains(r, "Legal text")
+        self.assertContains(r, '<div class="table-scroll">')
+        self.assertContains(r, "<caption>Retention</caption>")
+        self.assertContains(r, '<th scope="col">Kept for</th>', html=False)
+        self.assertContains(r, "<td>Server logs</td>")
+        self.assertContains(r, "<b>60</b> days")
+        self.assertContains(self.client.get("/"), 'href="/impressum/"')
+
+    def test_unknown_url_is_404(self):
+        r = self.client.get("/does-not-exist/")
+        assert r.status_code == 404
+        self.assertContains(r, "Page not found", status_code=404)
+
+    def test_pages_have_skip_link_and_landmarks(self):
+        # WCAG 2.4.1 (bypass blocks) and 1.3.1 (structure).
+        for url in ["/", "/does-not-exist/"]:
+            html = self.client.get(url).content.decode()
+            assert '<a class="skip-link" href="#main-content">' in html, url
+            assert '<main id="main-content" tabindex="-1">' in html, url
+            assert html.count("<h1") == 1, url
+        home = self.client.get("/")
+        self.assertContains(home, '<h2 class="section-label">Services</h2>')
+        self.assertContains(home, '<dl class="meta-card">')
+
+    def test_403_pages_render_their_message(self):
+        request = RequestFactory().get("/", secure=True)
+        r = permission_denied(request, PermissionDenied())
+        self.assertContains(r, "<title>Access denied</title>", status_code=403)
+        self.assertContains(r, '<main id="main-content"', status_code=403)
+        r = csrf_failure(request, reason="test")
+        self.assertContains(r, "<title>Request blocked</title>", status_code=403)
+
+    def add_impressum(self):
+        return HomePage.objects.get().add_child(
+            instance=StandardPage(
+                title="Impressum",
+                slug="impressum",
+                body=json.dumps([{"type": "text", "value": "<p>x</p>"}]),
+            )
+        )
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_robots_txt_points_to_sitemap(self):
+        r = self.client.get("/robots.txt", secure=True)
+        assert r.status_code == 200
+        assert r["Content-Type"].startswith("text/plain")
+        self.assertContains(r, "Sitemap: https://testserver/sitemap.xml")
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_sitemap_uses_request_host_not_seeded_site(self):
+        # The seeded Wagtail Site is localhost:80; URLs must follow the real host.
+        self.add_impressum()
+        r = self.client.get("/sitemap.xml", secure=True)
+        assert r.status_code == 200
+        self.assertContains(r, "<loc>https://testserver/</loc>")
+        self.assertContains(r, "<loc>https://testserver/impressum/</loc>")
+        self.assertNotContains(r, "localhost")
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_canonical_url_ignores_query_string(self):
+        self.add_impressum()
+        for url, canonical in [
+            ("/?utm_source=newsletter", "https://testserver/"),
+            ("/impressum/?ref=x", "https://testserver/impressum/"),
+        ]:
+            r = self.client.get(url, secure=True)
+            self.assertContains(r, f'<link rel="canonical" href="{canonical}" />')
+            self.assertContains(r, f'<meta property="og:url" content="{canonical}" />')
+            self.assertNotContains(r, "utm_source")
+
+    def test_error_pages_have_no_canonical(self):
+        r = self.client.get("/does-not-exist/")
+        self.assertNotContains(r, 'rel="canonical"', status_code=404)
+
+    def test_hero_is_not_hidden_by_fade_in(self):
+        html = self.client.get("/").content.decode()
+        hero = html.split('<section class="hero"')[1].split("</section>")[0]
+        assert "fade-up" not in hero
+        assert "fade-up" in html  # the sections below still fade in
+
+    def test_subpage_title_has_brand_and_no_generic_description(self):
+        self.add_impressum()
+        r = self.client.get("/impressum/")
+        self.assertContains(r, "<title>Impressum | Pfiffner Research IT</title>")
+        self.assertNotContains(r, 'name="description"')
+        self.assertNotContains(r, 'property="og:description"')
+
+    def test_no_obsolete_meta_tags(self):
+        r = self.client.get("/")
+        self.assertNotContains(r, 'name="keywords"')
+        self.assertNotContains(r, "X-UA-Compatible")
+        self.assertContains(r, '<meta name="author" content="Nico Pfiffner" />')
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_homepage_structured_data(self):
+        html = self.client.get("/", secure=True).content.decode()
+        raw = html.split('<script type="application/ld+json">')[1].split("</script>")[0]
+        data = json.loads(raw)
+        assert data["@type"] == "Organization"
+        assert data["url"] == "https://testserver/"
+        assert data["email"] == "nico@pfiffner-researchit.com"
+        assert data["taxID"] == "45784924"
+        assert len(data["hasOfferCatalog"]["itemListElement"]) == 4
+        assert data["founder"]["name"] == "Nico Pfiffner"
+        assert "https://github.com/Nico-AP" in data["founder"]["sameAs"]
+        assert "&" not in raw  # escaped, so content can't break out of the <script>
+
+    def test_structured_data_only_on_homepage(self):
+        self.add_impressum()
+        self.assertNotContains(self.client.get("/impressum/"), "application/ld+json")
+
+    def test_root_icons_redirect_to_static_files(self):
+        for url, target in [
+            ("/favicon.ico", "/static/core/img/favicons/favicon.ico"),
+            ("/apple-touch-icon.png", "/static/core/img/favicons/apple-touch-icon.png"),
+        ]:
+            r = self.client.get(url)
+            self.assertRedirects(r, target, fetch_redirect_response=False)
+        self.assertContains(self.client.get("/"), 'rel="apple-touch-icon"')
+
+    def test_500_page_renders_without_database_queries(self):
+        with self.assertNumQueries(0):
+            html = render_to_string("500.html", request=RequestFactory().get("/"))
+        assert "Server error" in html
+
+    def test_only_one_homepage_allowed(self):
+        assert not HomePage.can_create_at(Page.objects.get(depth=1))

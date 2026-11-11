@@ -1,0 +1,19 @@
+{% load wagtailcore_tags %}
+{# Wagtail's typed table, wrapped so wide tables scroll instead of breaking the layout. #}
+<div class="table-scroll">
+  <table>
+    {% if value.caption %}<caption>{{ value.caption }}</caption>{% endif %}
+    <thead>
+      <tr>
+        {% for col in value.columns %}<th scope="col">{{ col.heading }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in value.rows %}
+      <tr>
+        {% for block in row %}<td>{% include_block block %}</td>{% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

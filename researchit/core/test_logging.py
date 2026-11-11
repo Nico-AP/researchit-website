@@ -1,0 +1,72 @@
+import logging
+
+from django.core import mail
+from django.test import RequestFactory, SimpleTestCase, override_settings
+
+from config.logging_utils import anonymize_ip_processor
+from researchit.core.error_reports import _mask_ip_list
+
+
+class AnonymizeIpProcessorTests(SimpleTestCase):
+    def process(self, ip):
+        return anonymize_ip_processor(None, "info", {"event": "x", "ip": ip})
+
+    def test_ipv4_last_octet_zeroed(self):
+        self.assertEqual(self.process("203.0.113.77")["ip"], "203.0.113.0")
+
+    def test_ipv6_keeps_only_48_bit_prefix(self):
+        self.assertEqual(self.process("2001:db8:1234:5678::1")["ip"], "2001:db8:1234::")
+
+    def test_nothing_derived_from_the_full_ip_is_logged(self):
+        # A hash of the full IP next to its masked prefix is reversible (256 guesses).
+        event = self.process("203.0.113.77")
+        self.assertEqual(set(event), {"event", "ip"})
+
+    def test_invalid_ip(self):
+        self.assertEqual(self.process("not-an-ip")["ip"], "invalid")
+
+    def test_events_without_ip_unchanged(self):
+        self.assertEqual(
+            anonymize_ip_processor(None, "info", {"event": "x"}), {"event": "x"}
+        )
+
+
+@override_settings(ADMINS=[("researchit", "ops@example.test")], DEBUG=False)
+class ErrorMailIpMaskingTests(SimpleTestCase):
+    def test_error_mail_masks_client_ips(self):
+        request = RequestFactory().get(
+            "/boom/",
+            HTTP_HOST="localhost",
+            REMOTE_ADDR="172.18.0.5",
+            HTTP_X_FORWARDED_FOR="198.51.100.23, 203.0.113.77",
+            HTTP_X_REAL_IP="2001:db8:1234:5678::1",
+            HTTP_FORWARDED="for=192.0.2.60;proto=https",
+        )
+        try:
+            msg = "boom"
+            raise RuntimeError(msg)  # noqa: TRY301
+        except RuntimeError:
+            logging.getLogger("django.request").exception(
+                "Internal Server Error: /boom/",
+                extra={"status_code": 500, "request": request},
+            )
+
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        for full_ip in (
+            "172.18.0.5",
+            "198.51.100.23",
+            "203.0.113.77",
+            "2001:db8:1234:5678::1",
+            "192.0.2.60",
+        ):
+            self.assertNotIn(full_ip, body)
+        self.assertIn("HTTP_X_FORWARDED_FOR = '198.51.100.0, 203.0.113.0'", body)
+        self.assertIn("HTTP_X_REAL_IP = '2001:db8:1234::'", body)
+        self.assertIn("REMOTE_ADDR = '172.18.0.0'", body)
+
+    def test_garbage_in_ip_header_is_redacted(self):
+        self.assertEqual(
+            _mask_ip_list("203.0.113.77, not-an-ip"),
+            "203.0.113.0, ********************",
+        )

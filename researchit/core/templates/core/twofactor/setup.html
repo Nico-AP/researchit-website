@@ -1,0 +1,17 @@
+{% extends "core/twofactor/base.html" %}
+
+{% block titletag %}Set up two-factor authentication{% endblock titletag %}
+{% block heading %}Set up two-factor authentication{% endblock heading %}
+
+{% block intro %}
+  <p>
+    Admin access requires a second factor. Scan this QR code with an authenticator app
+    (e.g. a password manager, Aegis, or Google Authenticator), then enter the code it shows.
+  </p>
+  <div class="qr-svg-container">
+    {{ qr_svg }}
+  </div>
+  <p>Can't scan it? Enter this key manually: <code>{{ secret }}</code></p>
+{% endblock intro %}
+
+{% block submit_label %}Confirm and continue{% endblock submit_label %}

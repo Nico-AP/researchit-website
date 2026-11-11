@@ -1,49 +1,29 @@
+{% load wagtailcore_tags %}
+
 <section id="about">
   <div class="container">
-    <span class="section-label">About</span>
+    <h2 class="section-label">About</h2>
     <div class="row g-5 align-items-start">
 
       <div class="col-md-6 fade-up about-text">
-        <p>
-          I'm Nico Pfiffner, PhD, a researcher and developer with expertise in
-          participant-centered data collection methods.
-        </p>
-        <p>
-          I created the <a href="https://github.com/uzh/ddm" target="_blank">Data Donation Module</a>,
-          an open-source data donation collection tool, and wrote <a href="https://doi.org/10.5167/uzh-262837" target="_blank">my dissertation</a>
-          on the opportunities, challenges, and applications of data donation for studying digital media use and other phenomena.
-          <a href="https://scholar.google.com/citations?user=pr4z_hoAAAAJ&hl=de" target="_blank">My research</a> is published in peer-reviewed journals.
-        </p>
-        <p>
-          I work with universities and research teams to build reliable, ethical
-          data collection infrastructure — bridging academic methodology and
-          working software.
-        </p>
-        <p class="about-availability">
-          Available for project-based engagements.
-        </p>
+        {{ page.about_text|richtext }}
+        {% if page.about_availability %}
+        <p class="about-availability">{{ page.about_availability }}</p>
+        {% endif %}
       </div>
 
+      {% if page.facts.all %}
       <div class="col-md-6 fade-up">
-        <div class="meta-card">
+        <dl class="meta-card">
+          {% for fact in page.facts.all %}
           <div class="meta-row">
-            <span class="meta-key">Registered as</span>
-            <span class="meta-val">Pfiffner Research IT v/Nico Pfiffner</span>
+            <dt class="meta-key">{{ fact.label }}</dt>
+            <dd class="meta-val">{{ fact.value }}</dd>
           </div>
-          <div class="meta-row">
-            <span class="meta-key">CVR-nr</span>
-            <span class="meta-val">45784924</span>
-          </div>
-          <div class="meta-row">
-            <span class="meta-key">Location</span>
-            <span class="meta-val">Denmark · Remote</span>
-          </div>
-          <div class="meta-row">
-            <span class="meta-key">Languages</span>
-            <span class="meta-val">English · German</span>
-          </div>
-        </div>
+          {% endfor %}
+        </dl>
       </div>
+      {% endif %}
 
     </div>
   </div>

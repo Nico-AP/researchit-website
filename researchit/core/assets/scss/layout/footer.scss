@@ -5,11 +5,11 @@ footer {
 
 .footer-copy {
   font-size: 12px;
-  color: var(--brand-faint);
+  color: var(--brand-muted);  // --brand-faint is only 2.3:1 on the background
 }
 
 .footer-legal {
   font-size: 12px;
-  color: var(--brand-faint);
+  color: var(--brand-muted);
   text-align: right;
 }
