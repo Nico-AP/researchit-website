@@ -84,3 +84,23 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+
+  # Keep the 3 newest non-release images (:main / :sha-...) in ghcr.io and delete
+  # older ones plus leftover untagged layers. Release images (tags like 1.2.3 or
+  # 1.2, from git tags v1.2.3) are never deleted and don't count toward the 3,
+  # so any version pinned in researchit-deploy stays pullable.
+  # Runs after a successful push, never on pull requests.
+  cleanup:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ghcr-cleanup
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1.2.2
+        with:
+          package: researchit-website
+          keep-n-tagged: 3
+          delete-untagged: true
+          exclude-tags: '^\d+\.\d+(\.\d+)?$'
+          use-regex: true
