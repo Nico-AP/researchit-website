@@ -1,4 +1,7 @@
-from django.test import Client, TestCase
+from django.core.exceptions import PermissionDenied
+from django.test import Client, RequestFactory, TestCase
+from django.views.csrf import csrf_failure
+from django.views.defaults import permission_denied
 from wagtail.models import Page, Site
 
 from researchit.website.models import BusinessSettings, HomePage, StandardPage
@@ -70,6 +73,25 @@ class SeededContentTests(TestCase):
         r = self.client.get("/does-not-exist/")
         assert r.status_code == 404
         self.assertContains(r, "Page not found", status_code=404)
+
+    def test_pages_have_skip_link_and_landmarks(self):
+        # WCAG 2.4.1 (bypass blocks) and 1.3.1 (structure).
+        for url in ["/", "/does-not-exist/"]:
+            html = self.client.get(url).content.decode()
+            assert '<a class="skip-link" href="#main-content">' in html, url
+            assert '<main id="main-content" tabindex="-1">' in html, url
+            assert html.count("<h1") == 1, url
+        home = self.client.get("/")
+        self.assertContains(home, '<h2 class="section-label">Services</h2>')
+        self.assertContains(home, '<dl class="meta-card">')
+
+    def test_403_pages_render_their_message(self):
+        request = RequestFactory().get("/", secure=True)
+        r = permission_denied(request, PermissionDenied())
+        self.assertContains(r, "<title>Access denied</title>", status_code=403)
+        self.assertContains(r, '<main id="main-content"', status_code=403)
+        r = csrf_failure(request, reason="test")
+        self.assertContains(r, "<title>Request blocked</title>", status_code=403)
 
     def test_only_one_homepage_allowed(self):
         assert not HomePage.can_create_at(Page.objects.get(depth=1))

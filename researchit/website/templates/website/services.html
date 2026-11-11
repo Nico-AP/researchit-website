@@ -1,12 +1,12 @@
 {% if page.services.all %}
 <section id="services">
   <div class="container">
-    <span class="section-label">Services</span>
+    <h2 class="section-label">Services</h2>
     <div class="row g-3">
       {% for service in page.services.all %}
       <div class="col-md-6 fade-up">
         <div class="service-card">
-          <div class="service-card-title">{{ service.title }}</div>
+          <h3 class="service-card-title">{{ service.title }}</h3>
           <p class="service-card-desc">{{ service.description }}</p>
         </div>
       </div>

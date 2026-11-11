@@ -6,6 +6,8 @@
 
 {% include "website/navbar.html" %}
 
+<main id="main-content" tabindex="-1">
+
 {% include "website/hero.html" %}
 
 {% include "website/services.html" %}
@@ -14,10 +16,13 @@
 
 {% include "website/contact.html" %}
 
+</main>
+
 {% include "website/footer.html" %}
 
 {% endblock main %}
 
-{% block extra_js %}
-<script src="{% static 'core/js/fade-up.js' %}" defer></script>
-{% endblock extra_js %}
+{% block extra_head %}
+{# Not deferred: it must hide the fade-in content before the first paint. #}
+<script src="{% static 'core/js/fade-up.js' %}"></script>
+{% endblock extra_head %}

@@ -1,6 +1,10 @@
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  // Keep anchor targets and focused elements clear of the sticky navbar (WCAG 2.4.11).
+  scroll-padding-top: 5rem;
+}
 
 body {
   background-color: var(--brand-bg);
@@ -23,6 +27,39 @@ body {
 a { color: var(--brand-green-dim); text-decoration: none; transition: color 0.15s; }
 a:hover { color: var(--brand-green); }
 
+/* Links inside running text are underlined: colour alone doesn't set them apart (WCAG 1.4.1). */
+p a, li a:not(.nav-link):not(.btn-nav-cta) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Keyboard focus: one clearly visible ring everywhere (WCAG 2.4.7) ──
+   Overrides Bootstrap's faint focus shadows; the cookie banner keeps its own styles. */
+:focus-visible:not(#cc-main *) {
+  outline: 2px solid var(--brand-green) !important;
+  outline-offset: 3px;
+  box-shadow: none !important;
+}
+
+/* <main> is focused by the skip link; it needs no ring of its own. */
+main:focus { outline: none; }
+
+/* ── Skip link: hidden until focused with the keyboard (WCAG 2.4.1) ── */
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2000;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background: var(--brand-green);
+  color: #0b1612;
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus { transform: none; color: #0b1612; }
+
 /* ─────────────────────────────────────
    SECTION SHARED
 ───────────────────────────────────── */
@@ -35,6 +72,9 @@ section { padding: 4rem 0; }
 }
 
 .section-label {
+  font-family: inherit;
+  font-weight: 400;
+  line-height: inherit;
   font-size: 11px;
   color: var(--brand-green);
   letter-spacing: 0.12em;
@@ -69,6 +109,7 @@ section { padding: 4rem 0; }
 }
 
 .service-card-title {
+  line-height: 1.5;
   font-size: 14px;
   font-weight: 600;
   color: var(--brand-text);
@@ -103,6 +144,7 @@ section { padding: 4rem 0; }
 .about-availability i { margin-right: 6px; }
 
 .meta-card {
+  margin: 0;
   background: var(--brand-surface);
   border: 1px solid var(--brand-border);
   border-radius: 8px;
@@ -120,8 +162,8 @@ section { padding: 4rem 0; }
 
 .meta-row:last-child { border-bottom: none; }
 
-.meta-key { color: var(--brand-green-dim); }
-.meta-val { color: var(--brand-text); text-align: right; }
+.meta-key { color: var(--brand-green-dim); font-weight: 400; }
+.meta-val { color: var(--brand-text); text-align: right; margin: 0; }
 
 /* ─────────────────────────────────────
    CONTACT
@@ -152,13 +194,15 @@ section { padding: 4rem 0; }
 /* ─────────────────────────────────────
    FADE-IN ANIMATION
 ───────────────────────────────────── */
-.fade-up {
+/* Only hidden once fade-up.js has set .js-fade on <html>: without JavaScript
+   (or when it fails to load) the content simply shows. */
+.js-fade .fade-up {
   opacity: 0;
   transform: translateY(18px);
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-.fade-up.visible {
+.js-fade .fade-up.visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -169,6 +213,21 @@ section { padding: 4rem 0; }
 .fade-up:nth-child(3) { transition-delay: 0.19s; }
 .fade-up:nth-child(4) { transition-delay: 0.26s; }
 .fade-up:nth-child(5) { transition-delay: 0.33s; }
+
+/* No movement for people who asked their system for less of it. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .js-fade .fade-up,
+  .js-fade .fade-up.visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .btn-primary-brand:hover,
+  .btn-nav-cta:hover { transform: none; }
+}
 
 /* ─────────────────────────────────────
    STANDARD PAGE (Impressum, privacy policy, ...)
@@ -192,7 +251,7 @@ section { padding: 4rem 0; }
   hr { border-color: var(--brand-border); opacity: 1; }
 }
 
-.footer-legal a { color: var(--brand-faint); }
+.footer-legal a { color: var(--brand-muted); }
 .footer-legal a:hover { color: var(--brand-green); }
 
 

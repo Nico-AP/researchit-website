@@ -11,11 +11,13 @@
 
 {% block main %}
 {% include "website/navbar.html" %}
+<main id="main-content" tabindex="-1">
 <section class="standard-page">
   <div class="container">
     <h1 class="standard-page-title">Page not found</h1>
     <p>This is not the page you were looking for. <a href="/">Back to the homepage</a>.</p>
   </div>
 </section>
+</main>
 {% include "website/footer.html" %}
 {% endblock main %}

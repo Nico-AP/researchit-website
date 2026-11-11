@@ -2,7 +2,7 @@
 
 <section id="about">
   <div class="container">
-    <span class="section-label">About</span>
+    <h2 class="section-label">About</h2>
     <div class="row g-5 align-items-start">
 
       <div class="col-md-6 fade-up about-text">
@@ -14,14 +14,14 @@
 
       {% if page.facts.all %}
       <div class="col-md-6 fade-up">
-        <div class="meta-card">
+        <dl class="meta-card">
           {% for fact in page.facts.all %}
           <div class="meta-row">
-            <span class="meta-key">{{ fact.label }}</span>
-            <span class="meta-val">{{ fact.value }}</span>
+            <dt class="meta-key">{{ fact.label }}</dt>
+            <dd class="meta-val">{{ fact.value }}</dd>
           </div>
           {% endfor %}
-        </div>
+        </dl>
       </div>
       {% endif %}
 

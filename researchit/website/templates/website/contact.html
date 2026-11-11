@@ -1,7 +1,7 @@
 {% with biz=settings.researchit_website.BusinessSettings %}
 <section id="contact">
   <div class="container">
-    <span class="section-label">Contact</span>
+    <h2 class="section-label">Contact</h2>
     {% if page.contact_text %}
     {# djlint:off #}
     <p class="hero-sub mb-4" style="max-width:440px;">{{ page.contact_text }}</p>
@@ -10,14 +10,14 @@
     <div class="d-flex flex-wrap gap-3 fade-up">
       {% if biz.contact_email %}
       <a class="contact-chip" href="mailto:{{ biz.contact_email }}">
-        <i class="bi bi-envelope"></i>
+        <i class="bi bi-envelope" aria-hidden="true"></i>
         {{ biz.contact_email }}
       </a>
       {% endif %}
 
       {% if biz.github_url %}
       <a class="contact-chip" href="{{ biz.github_url }}" target="_blank" rel="noopener">
-        <i class="bi bi-github"></i>
+        <i class="bi bi-github" aria-hidden="true"></i>
         GitHub
       </a>
       {% endif %}
