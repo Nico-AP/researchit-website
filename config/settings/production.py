@@ -67,6 +67,9 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"  # matches CSP frame-ancestors 'none'
 # (Wagtail's live-preview views override this with SAMEORIGIN for their iframe.)
 
+# django-axes: the client IP comes from the X-Forwarded-For entry Caddy appended.
+AXES_CLIENT_IP_CALLABLE = "researchit.core.client_ip.get_client_ip"
+
 # django-csp - https://django-csp.readthedocs.io/en/latest/configuration.html
 
 _analytics = []

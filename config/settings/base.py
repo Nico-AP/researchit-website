@@ -50,6 +50,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "axes",
     "csp",
     "django_structlog",
 ]
@@ -93,6 +94,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
+    # Last of the auth-related middleware: turns a lockout into a 429 response.
+    "axes.middleware.AxesMiddleware",
     "django_structlog.middlewares.RequestMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
@@ -206,10 +209,24 @@ MEDIA_URL = "/media/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 
 AUTHENTICATION_BACKENDS = [
+    # First: rejects logins from locked-out clients before the password is checked.
+    "axes.backends.AxesStandaloneBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 AUTH_USER_MODEL = "researchit_core.User"
 
+# Brute-force protection (django-axes) for the Wagtail and Django admin logins.
+# https://django-axes.readthedocs.io/en/latest/4_configuration.html
+# Failed attempts are stored in the database; `just manage axes_reset` unlocks everyone.
+AXES_FAILURE_LIMIT = env.int("AXES_FAILURE_LIMIT", default=5)
+AXES_COOLOFF_TIME = env.float("AXES_COOLOFF_TIME", default=1)  # hours
+# Lock a username only from the IP it was attacked from, so that nobody can lock
+# an admin out of the CMS just by knowing their username.
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+# Don't keep the raw user agent / IP of successful logins longer than needed (GDPR).
+AXES_DISABLE_ACCESS_LOG = True
+# Client IP: REMOTE_ADDR here; behind Caddy, see production.py.
 
 # Fixtures
 # ------------------------------------------------------------------------------
