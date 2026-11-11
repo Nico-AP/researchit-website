@@ -256,6 +256,11 @@ ADMINS = [tuple(admin) for admin in json.loads(env.str("ADMINS", "[]"))]
 
 MANAGERS = ADMINS
 
+# Error mails mask client IPs (X-Forwarded-For etc.) like the logs do.
+DEFAULT_EXCEPTION_REPORTER_FILTER = (
+    "researchit.core.error_reports.IPMaskingExceptionReporterFilter"
+)
+
 
 # Wagtail CMS
 # ------------------------------------------------------------------------------
