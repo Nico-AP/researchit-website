@@ -10,10 +10,10 @@ dependencies = [
     "django-axes==9.0.0",          # https://django-axes.readthedocs.io/
     "django-csp==4.0",             # https://django-csp.readthedocs.io/
     "django-otp==1.7.5",
-    "django-structlog==10.0.0",    # https://github.com/jrobichaud/django-structlog
-    "environs[django]==14.5.0",    # https://pypi.org/project/environs/
-    "gunicorn==25.0.3",            # https://github.com/benoitc/gunicorn
-    "psycopg[binary]==3.3.2",      # https://www.psycopg.org/psycopg3/
+    "django-structlog==11.0.0",    # https://github.com/jrobichaud/django-structlog
+    "environs[django]==15.2.0",    # https://pypi.org/project/environs/
+    "gunicorn==26.2.0",            # https://github.com/benoitc/gunicorn
+    "psycopg[binary]==3.3.8",      # https://www.psycopg.org/psycopg3/
     "qrcode==8.2",
     "wagtail==8.1",
     "whitenoise[brotli]==6.12.0",  # https://github.com/evansd/whitenoise
@@ -22,14 +22,14 @@ dependencies = [
 [dependency-groups]
 # Installed by `uv sync` by default; excluded from the image (`--no-dev`).
 dev = [
-    "coverage==7.13.3",
-    "django-coverage-plugin==3.2.0",
-    "django-debug-toolbar==6.2.0",
-    "djlint==1.36.4",
-    "mypy==1.19.1",
-    "pip-audit==2.10.0",
-    "pre-commit==4.5.1",
-    "ruff==0.15.0",
+    "coverage==7.17.2",
+    "django-coverage-plugin==3.2.2",
+    "django-debug-toolbar==8.0.0",
+    "djlint==1.49.10",
+    "mypy==2.4.1",
+    "pip-audit==2.10.1",
+    "pre-commit==4.7.0",
+    "ruff==0.17.4",
 ]
 
 [tool.uv]
