@@ -8,7 +8,7 @@ from wagtail.contrib.sitemaps.views import sitemap
 from wagtail.documents import urls as wagtaildocs_urls
 
 from researchit.core import twofactor
-from researchit.website.seo import robots_txt
+from researchit.website.seo import robots_txt, static_redirect
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
@@ -16,6 +16,12 @@ urlpatterns = [
     path(settings.WAGTAILADMIN_URL, include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("robots.txt", robots_txt),
+    # Requested at the root by browsers and iOS regardless of the <link> tags.
+    path("favicon.ico", static_redirect("core/img/favicons/favicon.ico")),
+    path(
+        "apple-touch-icon.png",
+        static_redirect("core/img/favicons/apple-touch-icon.png"),
+    ),
     path("sitemap.xml", sitemap, name="sitemap"),
 ]
 

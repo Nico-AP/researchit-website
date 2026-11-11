@@ -32,16 +32,34 @@ BODY_FEATURES = [
 class BusinessSettings(BaseGenericSetting):
     """Details used in several places: navbar, hero, contact chips, footer."""
 
-    business_name = models.CharField(max_length=100, default="Pfiffner Research IT")
+    business_name = models.CharField(max_length=100, default="Pfiffner Research it")
+    owner_name = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="The person behind the business (page author, search engines).",
+    )
     contact_email = models.EmailField(blank=True)
     github_url = models.URLField("GitHub URL", blank=True)
     cvr_number = models.CharField("CVR number", max_length=20, blank=True)
     country = models.CharField(max_length=50, blank=True)
+    profile_urls = models.TextField(
+        "Profile links",
+        blank=True,
+        help_text=(
+            "One URL per line, e.g. Google Scholar, ORCID, LinkedIn. Not shown on the "
+            "page; tells search engines these profiles belong to the owner."
+        ),
+    )
 
     panels = [
         FieldPanel("business_name"),
+        FieldPanel("owner_name"),
         MultiFieldPanel(
-            [FieldPanel("contact_email"), FieldPanel("github_url")],
+            [
+                FieldPanel("contact_email"),
+                FieldPanel("github_url"),
+                FieldPanel("profile_urls"),
+            ],
             heading="Contact",
         ),
         MultiFieldPanel(
@@ -55,6 +73,10 @@ class BusinessSettings(BaseGenericSetting):
 
     def __str__(self):
         return self.business_name
+
+    @property
+    def profile_url_list(self) -> list[str]:
+        return [u.strip() for u in self.profile_urls.splitlines() if u.strip()]
 
 
 class HomePage(RequestHostSitemapMixin, Page):

@@ -1,4 +1,7 @@
+import json
+
 from django.core.exceptions import PermissionDenied
+from django.template.loader import render_to_string
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.views.csrf import csrf_failure
 from django.views.defaults import permission_denied
@@ -36,7 +39,11 @@ class SeededContentTests(TestCase):
     def test_homepage_renders_seeded_content(self):
         r = self.client.get("/")
         assert r.status_code == 200
-        self.assertContains(r, "<title>Pfiffner Research IT</title>", html=False)
+        self.assertContains(
+            r,
+            "<title>Data Donation &amp; Research Infrastructure"
+            " | Pfiffner Research IT</title>",
+        )
         self.assertContains(
             r, "Data collection systems<br>built on research expertise."
         )
@@ -136,6 +143,51 @@ class SeededContentTests(TestCase):
         hero = html.split('<section class="hero"')[1].split("</section>")[0]
         assert "fade-up" not in hero
         assert "fade-up" in html  # the sections below still fade in
+
+    def test_subpage_title_has_brand_and_no_generic_description(self):
+        self.add_impressum()
+        r = self.client.get("/impressum/")
+        self.assertContains(r, "<title>Impressum | Pfiffner Research IT</title>")
+        self.assertNotContains(r, 'name="description"')
+        self.assertNotContains(r, 'property="og:description"')
+
+    def test_no_obsolete_meta_tags(self):
+        r = self.client.get("/")
+        self.assertNotContains(r, 'name="keywords"')
+        self.assertNotContains(r, "X-UA-Compatible")
+        self.assertContains(r, '<meta name="author" content="Nico Pfiffner" />')
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
+    def test_homepage_structured_data(self):
+        html = self.client.get("/", secure=True).content.decode()
+        raw = html.split('<script type="application/ld+json">')[1].split("</script>")[0]
+        data = json.loads(raw)
+        assert data["@type"] == "Organization"
+        assert data["url"] == "https://testserver/"
+        assert data["email"] == "nico@pfiffner-researchit.com"
+        assert data["taxID"] == "45784924"
+        assert len(data["hasOfferCatalog"]["itemListElement"]) == 4
+        assert data["founder"]["name"] == "Nico Pfiffner"
+        assert "https://github.com/Nico-AP" in data["founder"]["sameAs"]
+        assert "&" not in raw  # escaped, so content can't break out of the <script>
+
+    def test_structured_data_only_on_homepage(self):
+        self.add_impressum()
+        self.assertNotContains(self.client.get("/impressum/"), "application/ld+json")
+
+    def test_root_icons_redirect_to_static_files(self):
+        for url, target in [
+            ("/favicon.ico", "/static/core/img/favicons/favicon.ico"),
+            ("/apple-touch-icon.png", "/static/core/img/favicons/apple-touch-icon.png"),
+        ]:
+            r = self.client.get(url)
+            self.assertRedirects(r, target, fetch_redirect_response=False)
+        self.assertContains(self.client.get("/"), 'rel="apple-touch-icon"')
+
+    def test_500_page_renders_without_database_queries(self):
+        with self.assertNumQueries(0):
+            html = render_to_string("500.html", request=RequestFactory().get("/"))
+        assert "Server error" in html
 
     def test_only_one_homepage_allowed(self):
         assert not HomePage.can_create_at(Page.objects.get(depth=1))
