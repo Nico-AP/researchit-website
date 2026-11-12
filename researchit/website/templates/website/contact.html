@@ -3,11 +3,7 @@
   <div class="container">
     <h2 class="section-label">Contact</h2>
     {% if page.contact_text %}
-    {# djlint:off #}
-
-    <p class="hero-sub mb-4" style="max-width:440px;">{{ page.contact_text }}</p>
-
-    {# djlint:on #}
+    <p class="hero-sub contact-text mb-4">{{ page.contact_text }}</p>
     {% endif %}
     <div class="d-flex flex-wrap gap-3 fade-up">
       {% if biz.contact_email %}

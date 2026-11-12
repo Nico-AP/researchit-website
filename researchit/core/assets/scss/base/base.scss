@@ -168,6 +168,10 @@ section { padding: 4rem 0; }
 /* ─────────────────────────────────────
    CONTACT
 ───────────────────────────────────── */
+.hero-sub.contact-text {  // .hero-sub (520px) loads later
+  max-width: 440px;
+}
+
 .contact-chip {
   display: inline-flex;
   align-items: center;
