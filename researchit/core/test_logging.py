@@ -3,10 +3,19 @@ import sys
 from unittest import mock
 
 from django.core import mail
-from django.test import RequestFactory, SimpleTestCase, override_settings
+from django.test import Client, RequestFactory, SimpleTestCase, override_settings
+from django.urls import path
 
 from config.logging_utils import ThrottledAdminEmailFilter, anonymize_ip_processor
 from researchit.core.error_reports import _mask_ip_list
+
+
+def _boom(request):
+    msg = "boom"
+    raise RuntimeError(msg)
+
+
+urlpatterns = [path("boom/", _boom)]
 
 
 class AnonymizeIpProcessorTests(SimpleTestCase):
@@ -66,6 +75,19 @@ class ErrorMailIpMaskingTests(SimpleTestCase):
         self.assertIn("HTTP_X_FORWARDED_FOR = '198.51.100.0, 203.0.113.0'", body)
         self.assertIn("HTTP_X_REAL_IP = '2001:db8:1234::'", body)
         self.assertIn("REMOTE_ADDR = '172.18.0.0'", body)
+
+    @override_settings(ROOT_URLCONF=__name__)
+    def test_one_mail_per_failed_request(self):
+        # django-structlog also logs the failure ("request_failed"); only Django's
+        # report (with request details) should be mailed, not a second copy.
+        # The throttle is bypassed so it can't hide a duplicate.
+        client = Client(raise_request_exception=False)
+        with mock.patch.object(ThrottledAdminEmailFilter, "filter", return_value=True):
+            response = client.get("/boom/", HTTP_HOST="localhost")
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Internal Server Error: /boom/", mail.outbox[0].subject)
 
     def test_garbage_in_ip_header_is_redacted(self):
         self.assertEqual(

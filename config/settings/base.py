@@ -380,6 +380,13 @@ LOGGING = {
             "propagate": False,
             "level": "WARNING",
         },
+        # Its "request_failed" event duplicates django.request's error mail (which
+        # has the request details), so it only goes to the console.
+        "django_structlog": {
+            "handlers": ["console"],
+            "propagate": False,
+            "level": "INFO",
+        },
     },
 }
 
