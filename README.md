@@ -105,8 +105,9 @@ uv run pre-commit run --all-files  # ruff, djLint, uv-lock, ...
 
 ### Testing the production image
 
-CI runs these checks on every PR. Run them locally before a release if you changed
-settings, dependencies or the Dockerfile:
+The image is only built for release tags, and these checks run before it is pushed.
+To catch problems before tagging, run them locally if you changed settings,
+dependencies, static files or the Dockerfile:
 
 ```bash
 docker build -t researchit-website:dev .
@@ -128,14 +129,10 @@ researchit-deploy (`just env=staging ...`).
 
 ## Release guide
 
-Releases are git tags. Each tag builds an image that stays in GHCR for good, and the
-server only runs images whose version is pinned in researchit-deploy.
-
-| Event               | Image tags pushed                  | Kept in GHCR        |
-|---------------------|------------------------------------|---------------------|
-| PR to `main`        | none (build + checks only)         | –                   |
-| push to `main`      | `:main`, `:sha-<short>`            | newest 3            |
-| tag `v1.2.3`        | `:1.2.3`, `:1.2`                   | forever             |
+Releases are git tags. Only a tag builds an image (`docker` workflow): `v1.2.3` pushes
+`:1.2.3` and `:1.2`, which stay in GHCR for good. Pushes to branches and pull requests
+run the `test` workflow only. The server only runs images whose version is pinned in
+researchit-deploy.
 
 ### 1. Prepare
 
@@ -147,8 +144,9 @@ Work on `dev`. Before releasing:
 
 ### 2. Merge and tag
 
-Open a PR from `dev` to `main`. CI builds the image and runs the deploy checks, tests and
-smoke render. Merge once it's green, then tag the merge commit
+Open a PR from `dev` to `main` and merge once the `test` workflow is green. If you
+changed settings, dependencies or the Dockerfile, run the image checks above first.
+Then tag the merge commit
 ([semver](https://semver.org): patch for fixes, minor for features, major for breaking
 changes such as a migration that drops data):
 
@@ -158,5 +156,7 @@ git tag -a v1.2.3 -m "v1.2.3"
 git push origin v1.2.3
 ```
 
-Wait for the `docker` workflow run of the tag to finish. The image is then
-`ghcr.io/nico-ap/researchit-website:1.2.3`.
+Wait for the `docker` workflow run of the tag to finish. It builds the image, runs the
+deploy checks, tests and smoke render, and only then pushes
+`ghcr.io/nico-ap/researchit-website:1.2.3`. If it fails, nothing is pushed: fix the
+problem on `dev`, merge again and release the next patch version (don't move the tag).
