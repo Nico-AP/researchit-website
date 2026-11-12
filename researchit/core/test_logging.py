@@ -76,14 +76,16 @@ class ErrorMailIpMaskingTests(SimpleTestCase):
         self.assertIn("HTTP_X_REAL_IP = '2001:db8:1234::'", body)
         self.assertIn("REMOTE_ADDR = '172.18.0.0'", body)
 
-    @override_settings(ROOT_URLCONF=__name__)
+    # ALLOWED_HOSTS is pinned: CI sets DJANGO_ALLOWED_HOSTS, and a rejected host
+    # would return 400 before the view runs.
+    @override_settings(ROOT_URLCONF=__name__, ALLOWED_HOSTS=["testserver"])
     def test_one_mail_per_failed_request(self):
         # django-structlog also logs the failure ("request_failed"); only Django's
         # report (with request details) should be mailed, not a second copy.
         # The throttle is bypassed so it can't hide a duplicate.
         client = Client(raise_request_exception=False)
         with mock.patch.object(ThrottledAdminEmailFilter, "filter", return_value=True):
-            response = client.get("/boom/", HTTP_HOST="localhost")
+            response = client.get("/boom/")
 
         self.assertEqual(response.status_code, 500)
         self.assertEqual(len(mail.outbox), 1)

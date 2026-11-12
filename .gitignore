@@ -328,3 +328,6 @@ takeout-demo.zip
 
 
 # Media files
+
+# macOS
+.DS_Store
