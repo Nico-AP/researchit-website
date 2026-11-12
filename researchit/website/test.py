@@ -2,6 +2,7 @@ import json
 
 from django.core.exceptions import PermissionDenied
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.views.csrf import csrf_failure
 from django.views.defaults import permission_denied
@@ -202,12 +203,14 @@ class SeededContentTests(TestCase):
         self.assertNotContains(self.client.get("/impressum/"), "application/ld+json")
 
     def test_root_icons_redirect_to_static_files(self):
-        for url, target in [
-            ("/favicon.ico", "/static/core/img/favicons/favicon.ico"),
-            ("/apple-touch-icon.png", "/static/core/img/favicons/apple-touch-icon.png"),
+        # static() gives the plain path in dev/CI and the hashed one in the image
+        # (ManifestStaticFilesStorage), the same as the view.
+        for url, path in [
+            ("/favicon.ico", "core/img/favicons/favicon.ico"),
+            ("/apple-touch-icon.png", "core/img/favicons/apple-touch-icon.png"),
         ]:
             r = self.client.get(url)
-            self.assertRedirects(r, target, fetch_redirect_response=False)
+            self.assertRedirects(r, static(path), fetch_redirect_response=False)
         self.assertContains(self.client.get("/"), 'rel="apple-touch-icon"')
 
     def test_500_page_renders_without_database_queries(self):
