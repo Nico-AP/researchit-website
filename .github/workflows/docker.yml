@@ -102,5 +102,7 @@ jobs:
           package: researchit-website
           keep-n-tagged: 3
           delete-untagged: true
-          exclude-tags: '^\d+\.\d+(\.\d+)?$'
+          # Release tags (1.2 / 1.2.3). Two alternatives instead of an optional
+          # group: the action rejects nested quantifiers as ReDoS-prone.
+          exclude-tags: '^\d+\.\d+$|^\d+\.\d+\.\d+$'
           use-regex: true
